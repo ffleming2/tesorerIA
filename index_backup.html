@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS Interface</title>
+    <link rel="stylesheet" href="static/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>T.E.S.O.R.E.R.<span class="highlight-ia">IA</span></h1>
+            <div class="header-right">
+                <div class="msg-counter" title="Mensajes en contexto">
+                    <i class="fas fa-history"></i>
+                    <span id="msg-count">0</span>
+                </div>
+                <div class="timer" id="request-timer">
+                    <i class="fas fa-stopwatch"></i>
+                    <span id="timer-val">0.0s</span>
+                </div>
+                <button id="settings-btn" class="icon-btn small"><i class="fas fa-cog"></i></button>
+                <div class="status-indicator" id="status">Online</div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- HUD DASHBOARD (Visualizer) -->
+            <div class="hud-container">
+                <!-- Background Grid Mejorada -->
+                <div class="hud-grid-bg"></div>
+                <canvas id="matrix-canvas"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;"></canvas>
+                <canvas id="matrix-effect"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3;display:none;"></canvas>
+
+                <!-- Left Panel: System Stats -->
+                <div class="hud-panel left-panel">
+                    <div class="hud-box system-status-card">
+                        <div class="hud-title">SYSTEM STATUS</div>
+                        <div class="stat-row">
+                            <span>CPU LOAD</span>
+                            <div class="progress-bar">
+                                <div class="fill" id="cpu-bar"></div>
+                            </div>
+                            <span id="cpu-val">45%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>MEMORY</span>
+                            <div class="progress-bar">
+                                <div class="fill" id="mem-bar"></div>
+                            </div>
+                            <span id="mem-val">60%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>GPU CORE</span>
+                            <div class="progress-bar">
+                                <div class="fill" id="gpu-bar"></div>
+                            </div>
+                            <span id="gpu-val">52%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>TEMP</span>
+                            <div class="progress-bar">
+                                <div class="fill" id="temp-bar"></div>
+                            </div>
+                            <span id="temp-val">38°C</span>
+                        </div>
+                        <div class="status-chips">
+                            <span class="status-chip" id="status-mode">STEALTH</span>
+                            <span class="status-chip secondary" id="status-core">CORE SYNC 99.3%</span>
+                        </div>
+                    </div>
+
+                    <div class="hud-box sensor-array">
+                        <div class="hud-title">SENSOR ARRAY</div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Atmospheric</div>
+                            <div class="sensor-value" id="atmo-val">98%</div>
+                            <div class="sensor-bar">
+                                <div class="fill" id="atmo-bar"></div>
+                            </div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Ionic Shield</div>
+                            <div class="sensor-value" id="ionic-val">72%</div>
+                            <div class="sensor-bar">
+                                <div class="fill" id="ionic-bar"></div>
+                            </div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-label">Stealth Field</div>
+                            <div class="sensor-value" id="stealth-val">64%</div>
+                            <div class="sensor-bar">
+                                <div class="fill" id="stealth-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hud-box hex-grid advanced-hex">
+                        <div class="hex-radar">
+                            <div class="hex-layer outer"></div>
+                            <div class="hex-layer inner"></div>
+                            <div class="hex-core"></div>
+                            <div class="radar-orbit orbit-one"></div>
+                            <div class="radar-orbit orbit-two"></div>
+                            <div class="radar-crosshair"></div>
+                            <div class="radar-beam"></div>
+                            <div class="radar-glow"></div>
+                            <span class="radar-blip" id="radar-blip-1"></span>
+                            <span class="radar-blip" id="radar-blip-2"></span>
+                            <span class="radar-blip" id="radar-blip-3"></span>
+                            <div class="hex-pulse pulse-one"></div>
+                            <div class="hex-pulse pulse-two"></div>
+                        </div>
+                        <div class="hex-readouts">
+                            <div>
+                                <span>Vector</span>
+                                <strong id="hex-vector">A7</strong>
+                            </div>
+                            <div>
+                                <span>Flux</span>
+                                <strong id="hex-flux">73%</strong>
+                            </div>
+                            <div>
+                                <span>Phase</span>
+                                <strong id="hex-phase">0.32π</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hud-box terminal-box">
+                        <div class="hud-title">PROTOCOLO LOG</div>
+                        <div class="terminal-lines" id="hud-terminal">
+                            > INIT_SEQUENCE_START...<br>
+                            > CORE_SYSTEMS_ONLINE<br>
+                            > WAITING_FOR_INPUT...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center: Reactor -->
+                <div id="jarvis-reactor-container">
+                    <svg id="jarvis-reactor" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <filter id="glow-effect" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                            <radialGradient id="core-grad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                                <stop offset="0%" style="stop-color:var(--core-color-1);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:var(--core-color-2);stop-opacity:0" />
+                            </radialGradient>
+                        </defs>
+
+                        <!-- Outer Ring Group -->
+                        <g class="ring-outer">
+                            <circle cx="100" cy="100" r="85" fill="none" stroke="var(--ring-color)" stroke-width="2"
+                                stroke-opacity="0.3" />
+                            <path d="M100,15 A85,85 0 0,1 185,100" fill="none" stroke="var(--ring-color)"
+                                stroke-width="4" stroke-linecap="round" class="arc-1" />
+                            <path d="M100,185 A85,85 0 0,1 15,100" fill="none" stroke="var(--ring-color)"
+                                stroke-width="4" stroke-linecap="round" class="arc-2" />
+                            <g class="ticks">
+                                <line x1="100" y1="10" x2="100" y2="20" stroke="var(--ring-color)" stroke-width="2" />
+                                <line x1="100" y1="180" x2="100" y2="190" stroke="var(--ring-color)" stroke-width="2" />
+                                <line x1="10" y1="100" x2="20" y2="100" stroke="var(--ring-color)" stroke-width="2" />
+                                <line x1="180" y1="100" x2="190" y2="100" stroke="var(--ring-color)" stroke-width="2" />
+                            </g>
+                        </g>
+
+                        <!-- Middle Ring Group -->
+                        <g class="ring-middle">
+                            <circle cx="100" cy="100" r="60" fill="none" stroke="var(--ring-color)" stroke-width="1"
+                                stroke-dasharray="10, 5" opacity="0.6" />
+                            <path d="M100,40 L110,50 L100,60 L90,50 Z" fill="var(--ring-color)" opacity="0.8"
+                                class="marker-top" />
+                            <path d="M100,160 L110,150 L100,140 L90,150 Z" fill="var(--ring-color)" opacity="0.8"
+                                class="marker-bottom" />
+                        </g>
+
+                        <!-- Inner Core Group -->
+                        <g class="core-group" filter="url(#glow-effect)">
+                            <circle class="core-base" cx="100" cy="100" r="30" fill="url(#core-grad)" />
+                            <g class="pupil-wrapper">
+                                <circle class="core-pupil" cx="100" cy="100" r="10" fill="#fff" opacity="0.9" />
+                                <circle class="core-pulse" cx="100" cy="100" r="15" fill="none" stroke="#fff"
+                                    stroke-width="1" opacity="0.5" />
+                                <path d="M100,75 L100,125 M75,100 L125,100" stroke="var(--ring-color)" stroke-width="1"
+                                    opacity="0.5" class="crosshair" />
+                                <g id="particles-layer"></g>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Right Panel: Network & Logs -->
+                <div class="hud-panel right-panel">
+                    <div class="hud-box mission-metrics">
+                        <div class="hud-title">METRICAS</div>
+                        <div class="mini-progress">
+                            <div class="label">CyberSeguridad</div>
+                            <div class="bar">
+                                <div class="fill" id="shield-progress"></div>
+                            </div>
+                            <span id="shield-val">84%</span>
+                        </div>
+                        <div class="mini-progress">
+                            <div class="label">H4ck30s</div>
+                            <div class="bar">
+                                <div class="fill" id="threat-progress"></div>
+                            </div>
+                            <span id="threat-val">32%</span>
+                        </div>
+                        <div class="mini-progress">
+                            <div class="label">Redes Seguras</div>
+                            <div class="bar">
+                                <div class="fill" id="nav-progress"></div>
+                            </div>
+                            <span id="nav-val">99.1%</span>
+                        </div>
+                        <div class="mission-footer">
+                            <div>
+                                <span class="label">Servers Online</span>
+                                <strong id="drone-count">08</strong>
+                            </div>
+                            <div>
+                                <span class="label">Servers Offline</span>
+                                <strong id="anomaly-count">0</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hud-box comm-panel">
+                        <div class="hud-title">COMM CHANNELS</div>
+                        <div class="channel" id="channel-alpha">
+                            <span>RCI</span>
+                            <em>Activo</em>
+                        </div>
+                        <div class="channel" id="channel-beta">
+                            <span>RECA</span>
+                            <em>Encriptado</em>
+                        </div>
+                        <div class="channel" id="channel-gamma">
+                            <span>SAE</span>
+                            <em>Cargando</em>
+                        </div>
+                    </div>
+
+                    <div class="hud-box globe-panel">
+                        <div class="hud-title">GEO-LOCATION</div>
+                        <div class="geo-globe-wrapper" style="position:relative;">
+                            <svg id="globe-svg" viewBox="0 0 220 120" width="100%" height="100%">
+                                <ellipse cx="110" cy="60" rx="90" ry="50" fill="#0a1a2f" stroke="#00ffe7"
+                                    stroke-width="2" opacity="0.2" />
+                                <!-- Ciudades de Chile con nombres -->
+                                <circle cx="120" cy="80" r="4" fill="#00ffe7" data-nombre="Santiago" class="city-dot" />
+                                <text x="128" y="85" font-size="10" fill="#00ffe7">Santiago</text>
+                                <circle cx="100" cy="95" r="3" fill="#00ffe7" data-nombre="Concepción"
+                                    class="city-dot" />
+                                <text x="108" y="100" font-size="9" fill="#00ffe7">Concepción</text>
+                                <circle cx="130" cy="60" r="3" fill="#00ffe7" data-nombre="Valparaíso"
+                                    class="city-dot" />
+                                <text x="138" y="65" font-size="9" fill="#00ffe7">Valparaíso</text>
+                                <circle cx="80" cy="40" r="3" fill="#00ffe7" data-nombre="Antofagasta"
+                                    class="city-dot" />
+                                <text x="88" y="45" font-size="9" fill="#00ffe7">Antofagasta</text>
+                                <circle cx="140" cy="100" r="3" fill="#00ffe7" data-nombre="Puerto Montt"
+                                    class="city-dot" />
+                                <text x="148" y="105" font-size="9" fill="#00ffe7">Puerto Montt</text>
+                            </svg>
+                            <div id="city-tooltip"
+                                style="display:none;position:absolute;padding:4px 10px;background:#0a1a2f;border:1px solid #00ffe7;color:#00ffe7;border-radius:6px;font-size:12px;pointer-events:none;z-index:10;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hud-box network-panel">
+                        <div class="hud-title">NETWORK ACTIVITY</div>
+                        <div class="network-graph">
+                            <svg viewBox="0 0 220 80" preserveAspectRatio="none" class="sparkline"
+                                id="network-sparkline">
+                                <polyline id="sparkline-path" points="" />
+                            </svg>
+                            <div class="network-grid"></div>
+                        </div>
+                        <div class="network-legend">
+                            <div>
+                                <span>TX</span>
+                                <strong id="tx-val">0 MB/s</strong>
+                            </div>
+                            <div>
+                                <span>RX</span>
+                                <strong id="rx-val">0 MB/s</strong>
+                            </div>
+                            <div>
+                                <span>LATENCY</span>
+                                <strong id="latency-val">0 ms</strong>
+                            </div>
+                        </div>
+                        <div class="latency-bars">
+                            <div class="latency-segment" id="latency-low"></div>
+                            <div class="latency-segment" id="latency-mid"></div>
+                            <div class="latency-segment" id="latency-high"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <canvas id="audio-visualizer"></canvas>
+            </div>
+
+            <div class="right-column">
+                <div class="agent-panel" id="agent-panel">
+                    <div class="agent-header">
+                        <div class="agent-tabs">
+                            <button class="tab-btn active" data-tab="preview"><i class="fas fa-eye"></i>
+                                Preview</button>
+                            <button class="tab-btn" data-tab="html"><i class="fab fa-html5"></i> HTML</button>
+                            <button class="tab-btn" data-tab="css"><i class="fab fa-css3-alt"></i> CSS</button>
+                            <button class="tab-btn" data-tab="js"><i class="fab fa-js"></i> JS</button>
+                            <button class="tab-btn" data-tab="plsql"><i class="fas fa-database"></i> PL/SQL</button>
+                            <button class="tab-btn" data-tab="ajax"><i class="fas fa-exchange-alt"></i> AJAX</button>
+                        </div>
+                    </div>
+                    <div class="agent-content">
+                        <div class="tab-pane active" id="preview-pane">
+                            <iframe id="preview-frame"></iframe>
+                        </div>
+                        <div class="tab-pane" id="html-pane">
+                            <pre><code class="language-html" id="code-html"></code></pre>
+                        </div>
+                        <div class="tab-pane" id="css-pane">
+                            <pre><code class="language-css" id="code-css"></code></pre>
+                        </div>
+                        <div class="tab-pane" id="js-pane">
+                            <pre><code class="language-javascript" id="code-js"></code></pre>
+                        </div>
+                        <div class="tab-pane" id="plsql-pane">
+                            <pre><code class="language-sql" id="code-plsql"></code></pre>
+                        </div>
+                        <div class="tab-pane" id="ajax-pane">
+                            <pre><code class="language-sql" id="code-ajax"></code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-box" id="chat-box">
+                    <div class="message bot">
+                        <div class="content">Buen dia, ¿En qué puedo ayudarle hoy?</div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-area">
+                    <button id="mic-btn" class="icon-btn"><i class="fas fa-microphone"></i></button>
+                    <input type="text" id="user-input" placeholder="Escribe un mensaje...">
+                    <button id="send-btn" class="icon-btn"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content settings-layout">
+            <div class="settings-sidebar">
+                <div class="settings-header-title">
+                    <i class="fas fa-microchip"></i> PROTOCOLOS
+                </div>
+                <button class="settings-tab-btn active" data-target="roles-tab">
+                    <i class="fas fa-user-astronaut"></i> Roles
+                </button>
+                <button class="settings-tab-btn" data-target="api-keys-tab">
+                    <i class="fas fa-key"></i> API Keys
+                </button>
+                <button class="settings-tab-btn" data-target="models-tab">
+                    <i class="fas fa-server"></i> Modelos
+                </button>
+                <div class="settings-spacer"></div>
+                <button class="close-modal-btn">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+
+            <div class="settings-main-content">
+                <!-- ROLES TAB -->
+                <div id="roles-tab" class="settings-section active">
+                    <h3>Configuración de Roles</h3>
+                    <div class="form-group">
+                        <label>Seleccionar Rol:</label>
+                        <select id="role-select"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nombre del Rol:</label>
+                        <input type="text" id="role-name" placeholder="Nombre del perfil...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Instrucción del Sistema (System Prompt):</label>
+                        <textarea id="system-prompt"
+                            placeholder="Define la personalidad y capacidades de la IA..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Configuración de Voz:</label>
+                        <div class="voice-settings-panel">
+                            <div class="voice-select-group">
+                                <label for="voice-select"><i class="fas fa-volume-up"></i> Voz:</label>
+                                <select id="voice-select"></select>
+                            </div>
+                            <div class="voice-sliders">
+                                <div class="slider-group">
+                                    <label>Velocidad: <span id="rate-val">1</span></label>
+                                    <input type="range" id="rate" min="0.5" max="2" value="1" step="0.1">
+                                </div>
+                                <div class="slider-group">
+                                    <label>Tono: <span id="pitch-val">1</span></label>
+                                    <input type="range" id="pitch" min="0" max="2" value="1" step="0.1">
+                                </div>
+                                <div class="slider-group">
+                                    <label>Volumen: <span id="vol-val">1</span></label>
+                                    <input type="range" id="volume" min="0" max="1" value="1" step="0.1">
+                                </div>
+                            </div>
+                            <div class="voice-extras">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="show-all-voices">
+                                    <span class="checkmark"></span>
+                                    Mostrar todas
+                                </label>
+                                <button id="test-voice-btn" class="secondary-btn"><i class="fas fa-play"></i>
+                                    Probar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="save-role-btn" class="action-btn">Guardar</button>
+                        <button id="new-role-btn" class="action-btn outline">Nuevo</button>
+                        <button id="delete-role-btn" class="action-btn danger">Eliminar</button>
+                    </div>
+                </div>
+
+                <!-- API KEYS TAB -->
+                <div id="api-keys-tab" class="settings-section">
+                    <h3>Gestión de API Keys (Gemini)</h3>
+                    <div class="api-keys-container">
+                        <div class="api-key-list" id="api-key-list">
+                            <!-- Keys will be injected here -->
+                        </div>
+                        <div class="add-key-form">
+                            <h4>Agregar Nueva Key</h4>
+                            <div class="input-row">
+                                <input type="text" id="new-key-label" placeholder="Etiqueta (ej. Lara)">
+                                <input type="text" id="new-key-value" placeholder="API Key (AIzaSy...)">
+                            </div>
+                            <button id="add-api-key-btn" class="action-btn"><i class="fas fa-plus"></i> Agregar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODELS TAB -->
+                <div id="models-tab" class="settings-section">
+                    <h3>Configuración de Modelos</h3>
+                    <div class="form-group">
+                        <label>Modelo Activo:</label>
+                        <select id="model-select" class="model-selector" style="width: 100%; margin-bottom: 20px;">
+                            <option value="qwen3-coder:latest">Qwen3 Coder (18GB)</option>
+                            <option value="qwen2.5-coder:latest">Qwen2.5 Coder (4.7GB)</option>
+                            <option value="qwen2.5-coder:3b">Qwen2.5 Coder 3B (1.9GB)</option>
+                            <option value="qwen2.5-coder:1.5b">Qwen2.5 Coder 1.5B (1GB)</option>
+                            <option value="deepseek-r1:latest">DeepSeek R1 (4.7GB)</option>
+                            <option value="llama3.1:latest">Llama 3.1 (4.9GB)</option>
+                            <option value="llama3.2:latest">Llama 3.2 (2.0GB)</option>
+                            <option value="gemma3:4b">Gemma 3 4B (3.3GB)</option>
+                            <!-- Gemini Models -->
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Rápido/Versátil)</option>
+                            <option value="gemini-flash-lite-latest" selected>Gemini Flash Lite (Ultrarrápido)</option>
+                            <option value="gemini-2.5-pro">Gemini 2.5 Pro (Potente)</option>
+                            <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image (Edición Imágenes)</option>
+                            <option value="imagen-4.0-generate-001">Imagen 4.0 (Generación Imágenes)</option>
+                            <option value="veo-2.0-generate-001">Veo 2.0 (Generación Video)</option>
+                        </select>
+                    </div>
+                    <h4>Límites de Modelos (Persistente)</h4>
+                    <div class="models-list-container" id="models-config-list">
+                        <!-- Models config will be injected here -->
+                    </div>
+                    <div class="modal-actions">
+                        <button id="save-models-btn" class="action-btn">Guardar Cambios</button>
+                        <button id="reset-models-btn" class="action-btn warning">Restaurar Defaults</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/templates.js"></script>
+    <script src="static/js/config.js"></script>
+    <script src="static/js/ui.js"></script>
+    <script src="static/js/animations.js"></script>
+    <script src="static/js/emotion.js"></script>
+    <script src="static/js/agent-panel.js"></script>
+    <script src="static/js/role-manager.js"></script>
+    <script src="static/js/settings.js"></script>
+    <script src="static/js/speech.js"></script>
+    <script src="static/js/chat.js"></script>
+    <script src="static/js/main.js"></script>
+</body>
+
+</html>

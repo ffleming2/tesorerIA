@@ -1,0 +1,28 @@
+/* === Extras y Utilidades === */
+
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+}
+
+button:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #aaa;
+    font-size: 0.9em;
+}
+
+.checkbox-container input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: #00ffff;
+}
