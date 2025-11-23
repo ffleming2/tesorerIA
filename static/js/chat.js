@@ -3,20 +3,46 @@ function addMessage(text, sender) {
     const chatBox = document.getElementById('chat-box');
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message ' + sender;
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'content';
-    contentDiv.innerHTML = text;
-    messageDiv.appendChild(contentDiv);
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content';
+        // Si el mensaje contiene un bloque mermaid, renderizarlo correctamente
+        const mermaidMatch = text.match(/```mermaid([\s\S]*?)```/);
+        if (mermaidMatch) {
+            const mermaidDiv = document.createElement('div');
+            mermaidDiv.className = 'mermaid';
+            mermaidDiv.textContent = mermaidMatch[1].trim();
+            contentDiv.appendChild(mermaidDiv);
+            // Renderizar Mermaid tras insertar el contenido
+            if (window.mermaid) {
+                setTimeout(() => {
+                    window.mermaid.init(undefined, mermaidDiv);
+                }, 100);
+            }
+            // Agregar el resto del texto sin el bloque mermaid
+            const textoSinMermaid = text.replace(/```mermaid[\s\S]*?```/, '').trim();
+            if (textoSinMermaid) {
+                const textoDiv = document.createElement('div');
+                textoDiv.innerHTML = textoSinMermaid;
+                contentDiv.appendChild(textoDiv);
+            }
+        } else {
+            contentDiv.innerHTML = text;
+        }
+        messageDiv.appendChild(contentDiv);
     chatBox.appendChild(messageDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
-    // JARVIS siempre habla todos los mensajes tipo bot
+    // JARVIS solo habla respuestas cortas tipo bot (no reportes largos)
     if (sender === 'bot') {
-        if (typeof speak === 'function') {
-            speak(text);
-        } else if (window.speechSynthesis) {
-            const utter = new window.SpeechSynthesisUtterance(text);
-            utter.lang = 'es-ES';
-            window.speechSynthesis.speak(utter);
+        // Si el texto es muy largo (más de 200 caracteres o contiene tablas/código), no leer
+        const esLargo = text.length > 200 || /\|.*\|/.test(text) || /```/.test(text);
+        if (!esLargo) {
+            if (typeof speak === 'function') {
+                speak(text);
+            } else if (window.speechSynthesis) {
+                const utter = new window.SpeechSynthesisUtterance(text);
+                utter.lang = 'es-ES';
+                window.speechSynthesis.speak(utter);
+            }
         }
     }
 }
@@ -150,10 +176,12 @@ async function sendMessage() {
         if (modal) {
             const mermaidDiv = modal.querySelector('.mermaid');
             if (mermaidDiv) {
-                mermaidDiv.innerHTML = `<pre class='mermaid'>${mermaidDiagram}</pre>`;
+                // Insertar el diagrama Mermaid como HTML, no como <pre>
+                mermaidDiv.innerHTML = `${mermaidDiagram}`;
+                // Renderizar Mermaid tras insertar el contenido
                 if (window.mermaid) {
                     setTimeout(() => {
-                        window.mermaid.init(undefined, mermaidDiv.querySelector('.mermaid'));
+                        window.mermaid.init(undefined, mermaidDiv);
                     }, 100);
                 }
             }

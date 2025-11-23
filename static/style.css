@@ -1,3 +1,22 @@
+/* === MEJORAS MERMAID === */
+.mermaid {
+    background: rgba(0, 20, 20, 0.95);
+    color: #00ffff;
+    border-radius: 10px;
+    padding: 18px 12px;
+    margin: 12px 0;
+    box-shadow: 0 0 12px #00333399;
+    overflow-x: auto;
+    font-size: 1em;
+    max-width: 100%;
+}
+
+.mermaid svg {
+    background: transparent !important;
+    color: #00ffff !important;
+    width: 100% !important;
+    height: auto !important;
+}
 /* === JARVIS INTERFACE === */
 
 body {
